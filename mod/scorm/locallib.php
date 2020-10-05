@@ -158,7 +158,8 @@ function scorm_get_updatefreq_array() {
  */
 function scorm_get_popup_display_array() {
     return array(0 => get_string('currentwindow', 'scorm'),
-                 1 => get_string('popup', 'scorm'));
+                 1 => get_string('popup', 'scorm'),
+                 2 => get_string('newwindow_simple', 'scorm'));
 }
 
 /**

@@ -111,14 +111,14 @@ class mod_scorm_mod_form extends moodleform_mod {
         $mform->setDefault('width', $cfgscorm->framewidth);
         $mform->setType('width', PARAM_INT);
         $mform->setAdvanced('width', $cfgscorm->framewidth_adv);
-        $mform->hideIf('width', 'popup', 'eq', 0);
+        $mform->hideIf('width', 'popup', 'noteq', 1);
 
         // Height.
         $mform->addElement('text', 'height', get_string('height', 'scorm'), 'maxlength="5" size="5"');
         $mform->setDefault('height', $cfgscorm->frameheight);
         $mform->setType('height', PARAM_INT);
         $mform->setAdvanced('height', $cfgscorm->frameheight_adv);
-        $mform->hideIf('height', 'popup', 'eq', 0);
+        $mform->hideIf('height', 'popup', 'noteq', 1);
 
         // Window Options.
         $winoptgrp = array();
@@ -127,7 +127,7 @@ class mod_scorm_mod_form extends moodleform_mod {
             $mform->setDefault($key, $value);
         }
         $mform->addGroup($winoptgrp, 'winoptgrp', get_string('options', 'scorm'), '<br />', false);
-        $mform->hideIf('winoptgrp', 'popup', 'eq', 0);
+        $mform->hideIf('winoptgrp', 'popup', 'noteq', 1);
         $mform->setAdvanced('winoptgrp', $cfgscorm->winoptgrp_adv);
 
         // Display activity name.

@@ -159,7 +159,7 @@ $completion = new completion_info($course);
 $completion->set_module_viewed($cm);
 
 // Print the page header.
-if (empty($scorm->popup) || $displaymode == 'popup') {
+if ($scorm->popup != 1 || $displaymode=='popup') {
     if ($course->format == 'singleactivity' && $scorm->skipview == SCORM_SKIPVIEW_ALWAYS
         && !has_capability('mod/scorm:viewreport', context_module::instance($cm->id))) {
         // Redirect students back to site home to avoid redirect loop.
@@ -220,7 +220,7 @@ if ($scorm->hidetoc == SCORM_TOC_POPUP or $mode == 'browse' or $mode == 'review'
 
 echo html_writer::start_div('', array('id' => 'toctree'));
 
-if (empty($scorm->popup) || $displaymode == 'popup') {
+if ($scorm->popup != 1 || $displaymode == 'popup') {
     echo $result->toc;
 } else {
     // Added incase javascript popups are blocked we don't provide a direct link
@@ -234,7 +234,7 @@ echo html_writer::end_div(); // Toc box ends.
 echo html_writer::tag('noscript', html_writer::div(get_string('noscriptnoscorm', 'scorm'), '', array('id' => 'noscript')));
 
 if ($result->prerequisites) {
-    if ($scorm->popup != 0 && $displaymode !== 'popup') {
+    if ($scorm->popup == 1 && $displaymode !=='popup') {
         // Clean the name for the window as IE is fussy.
         $name = preg_replace("/[^A-Za-z0-9]/", "", $scorm->name);
         if (!$name) {
@@ -258,7 +258,7 @@ echo html_writer::end_div(); // Scorm page ends.
 $scoes = scorm_get_toc_object($USER, $scorm, $currentorg, $sco->id, $mode, $attempt);
 $adlnav = scorm_get_adlnav_json($scoes['scoes']);
 
-if (empty($scorm->popup) || $displaymode == 'popup') {
+if ($scorm->popup != 1 || $displaymode == 'popup') {
     if (!isset($result->toctitle)) {
         $result->toctitle = get_string('toc', 'scorm');
     }
