@@ -483,7 +483,7 @@ if (empty($courseid)) {
 
     // Just valid courses?
     if ($validonly) {
-        $validsql = " AND (lit.timeexpires > :runtime or (lit.timecompleted IS NULL) or (lit.timecompleted > 0 AND lit.timeexpires IS NULL))";
+        $validsql = " AND (lit.timeexpires > :runtime || (lit.timecompleted IS NULL) || (lit.timecompleted > 0 AND lit.timeexpires IS NULL))";
         $sqlparams['runtime'] = time();
     } else {
         $validsql = "";
@@ -498,14 +498,13 @@ if (empty($courseid)) {
     // Set up the headers for the form.
     $headers = array(get_string('firstname'),
                      get_string('lastname'),
-                     get_string('department', 'block_iomad_company_admin'),
-                     get_string('email'));
+                     get_string('department', 'block_iomad_company_admin'));
+/// modified by Noam get_string('email'));
 
     $columns = array('firstname',
                      'lastname',
-                     'department',
-                     'email');
-
+                     'department');
+/// modified by Noam 'email');
     // Deal with optional report fields.
     if (!empty($extrafields)) {
         foreach ($extrafields as $extrafield) {
@@ -571,12 +570,12 @@ if (empty($courseid)) {
         $columns[] = 'finalscore';
         $headers[] = get_string('grade');
     }
-
+/// modified by Noam
     // And finally the last of the columns.
-    if (!$table->is_downloading()) {
+    /*if (!$table->is_downloading()) {
         $headers[] = get_string('certificate', 'local_report_completion');
         $columns[] = 'certificate';
-    }
+    }*/
 
     // Set up the table and display it.
     $table->set_sql($selectsql, $fromsql, $wheresql, $sqlparams);

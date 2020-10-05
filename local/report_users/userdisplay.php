@@ -114,10 +114,10 @@ if (!empty($action)) {
             if ($revoke) {
                 echo $OUTPUT->confirm(get_string('revokeconfirm', 'local_report_users'), $confirmurl, $cancel);
             } else {
-                if (empty($CFG->iomad_autoreallocate_licenses)) {
-                    echo $OUTPUT->confirm(get_string('clearconfirm', 'local_report_users'), $confirmurl, $cancel);
-                } else {
-                    echo $OUTPUT->confirm(get_string('clearreallocateconfirm', 'local_report_users'), $confirmurl, $cancel);
+            if (empty($CFG->iomad_autoreallocate_licenses)) {
+                echo $OUTPUT->confirm(get_string('clearconfirm', 'local_report_users'), $confirmurl, $cancel);
+            } else {
+                echo $OUTPUT->confirm(get_string('clearreallocateconfirm', 'local_report_users'), $confirmurl, $cancel);
                 }
             }
         } else if ($action == 'trackonly') {
@@ -208,13 +208,13 @@ $wheresql = " lit.userid = :userid AND lit.companyid = :companyid AND lit.course
 // Set up the headers for the form.
 $headers = array(get_string('course', 'local_report_completion'),
                  get_string('status'),
-                 get_string('licensedateallocated', 'block_iomad_company_admin'),
+                ///  get_string('licensedateallocated', 'block_iomad_company_admin'),
                  get_string('datestarted', 'local_report_completion'),
                  get_string('datecompleted', 'local_report_completion'));
 
 $columns = array('coursename',
                  'status',
-                 'licenseallocated',
+                /// 'licenseallocated',
                  'timeenrolled',
                  'timecompleted');
 
@@ -240,13 +240,15 @@ if ($DB->get_records_sql("SELECT lit.id FROM {iomad_courses} ic
     $headers[] = get_string('grade');
 }
 
+/// Removed certificate column by Noam
+/*
 if (!$table->is_downloading()){
     $headers[] = get_string('certificate', 'local_report_completion');
     $columns[] = 'certificate';
     $headers[] = get_string('actions');
     $columns[] = 'actions';
 }
-
+*/
 $table->set_sql($selectsql, $fromsql, $wheresql, $sqlparams);
 $table->define_baseurl($baseurl);
 $table->define_columns($columns);

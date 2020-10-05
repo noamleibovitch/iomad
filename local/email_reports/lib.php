@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/*** Modified by NOAM LEIBOVITCH
+ *   changed code to send completion report warning to department managers ***/
+
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->dirroot.'/local/email/lib.php');
 
@@ -187,10 +190,11 @@ function email_reports_cron() {
                                AND lit.timecompleted IS NULL
                                AND lit.timeenrolled < " . $runtime . " - (ic.warncompletion * 86400)
                                AND u.deleted = 0
-                               AND u.suspended = 0
-                               AND lit.completedstop = 0";
+                               AND u.suspended = 0";
+                               ///AND lit.completedstop = 0";
 
     $companies = $DB->get_records_sql($notcompletedcompanysql);
+///    mtrace("completion report companies: ".json_encode($companies));
     foreach ($companies as $company) {
         if (!$companyrec = $DB->get_record('company', array('id' => $company->companyid))) {
             continue;
@@ -216,8 +220,9 @@ function email_reports_cron() {
                                                   $companysql", array('companyid' => $company->companyid));
                 foreach ($managers as $manager) {
                     // Department managers dont get reports on company manager users.
+            // Changed to false so department managers will recieve the report
                     if ($manager->managertype == 2) {
-                        $departmentmanager = true;
+                        $departmentmanager = false;
                     } else {
                         $departmentmanager = false;
                     }
@@ -256,8 +261,8 @@ function email_reports_cron() {
                                               AND lit.timecompleted IS NULL
                                               AND lit.timeenrolled < " . $runtime . " - (ic.warncompletion * 86400)
                                               AND u.deleted = 0
-                                              AND u.suspended = 0
-                                              AND lit.completedstop = 0";
+                                              AND u.suspended = 0";
+                                              ///AND lit.completedstop = 0";
 
                     $managerusers = $DB->get_records_sql($notcompleteddigestsql,
                                                          array('managerid' => $manager->userid,
@@ -295,8 +300,9 @@ function email_reports_cron() {
                             continue;
                         }
                         $foundusers = true;
-                        $summary .= "<tr><td>" . $manageruser->firstname . "</td>" .
-                                    "<td>" . $manageruser->lastname . "</td>" .
+///			mtrace("completion report managerUser: ".json_encode($manageruser));
+                        $summary .= "<tr><td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->firstname . "</td>" .
+                                    "<td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->lastname . "</td></a>" .
                                     "<td>" . $manageruser->email . "</td>" .
                                     "<td>" . $manageruser->coursename . "</td>" .
                                     "<td>" . date($CFG->iomad_date_format, $manageruser->timeenrolled) . "</td></tr>";

@@ -261,7 +261,7 @@ class local_report_course_completion_course_table extends table_sql {
     } else {
         $validcompletedsql = "";
     }
-
+/*** Modified by Noam: Timeenrolled was changed to time started to display not started users in report */
         // Count the completed users.
         $completed = $DB->count_records_sql("SELECT COUNT(lit.id)
                                              FROM {local_iomad_track} lit
@@ -283,7 +283,7 @@ class local_report_course_completion_course_table extends table_sql {
                                            JOIN {user} u ON (lit.userid = u.id)
                                            WHERE lit.companyid = :companyid
                                            AND lit.courseid = :courseid
-                                           AND lit.timeenrolled IS NOT NULL
+                                           AND lit.timestarted IS NOT NULL
                                            AND lit.timecompleted IS NULL
                                            $datesql
                                            $suspendedsql
@@ -296,12 +296,13 @@ class local_report_course_completion_course_table extends table_sql {
                                               JOIN {user} u ON (lit.userid = u.id)
                                               WHERE lit.courseid = :courseid
                                               AND lit.companyid = :companyid
-                                              AND lit.timeenrolled IS NULL
+                                              AND lit.timestarted IS NULL
                                               $datesql
                                               $suspendedsql
                                               $departmentsql",
                                               $sqlparams);
-
+///// Added By Noam
+	$totalusers = $notstarted + $started + $completed;
         if (!$this->is_downloading()) {
             $enrolledchart = new \core\chart_pie();
             $enrolledchart->set_doughnut(true); // Calling set_doughnut(true) we display the chart as a doughnut.
@@ -321,7 +322,7 @@ class local_report_course_completion_course_table extends table_sql {
                                              get_string('inprogressusers', 'local_report_completion') . " (" . $started . "%)",
                                              get_string('notstartedusers', 'local_report_completion') . " (" . $notstarted . "%)"));
             }
-            $CFG->chart_colorset= ['green', '#1177d1', '#d9534f'];
+            $CFG->chart_colorset= ['green', '#ffa500', '#d9534f'];
             return $output->render($enrolledchart, false);
         } else {
             return get_string('completedusers', 'local_report_completion') . " = $completed\n" .

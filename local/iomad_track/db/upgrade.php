@@ -481,6 +481,7 @@ mtrace("enrol end " . time());
         $task = new local_iomad_track\task\fixtracklicensetask();
         \core\task\manager::queue_adhoc_task($task, true);
 
+
         // Iomad_track savepoint reached.
         upgrade_plugin_savepoint(true, 2020010201, 'local', 'iomad_track');
     }

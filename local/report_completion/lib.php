@@ -266,7 +266,6 @@ class comprep{
             $datum->numusers = $numusers;
             $datum->started = $numnotstarted;
             $datum->inprogress = $numprogress;
-
             $data[ $courseid ] = $datum;
         }
 

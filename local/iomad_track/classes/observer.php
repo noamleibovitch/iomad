@@ -152,7 +152,7 @@ class observer {
 
             // Generate correct filename (same as certificate mod's view.php does)
             $certname = rtrim($certificate->name, '.');
-            $filename = clean_filename(format_string($certname) . ".pdf");
+            $filename = clean_filename("$certname.pdf");
 
             // Create the certificate content (always create new so it's up to date)
             $content = self::create_certificate($certificate, $user, $cm, $course, $certissue);
@@ -563,12 +563,13 @@ class observer {
                     // Need a default.
                     $companyid = 0;
                 }
+  /// Changed time started to null so report will display not started users
                 $entry = array('userid' => $userid,
                                'courseid' => $courseid,
                                'coursename' => $courserec->fullname,
                                'companyid' => $companyid,
                                'timeenrolled' => $timeenrolled,
-                               'timestarted' => $timeenrolled,
+                               'timestarted' => NULL,
                                'modifiedtime' => $modifiedtime
                                );
                 $DB->insert_record('local_iomad_track', $entry);
@@ -630,6 +631,7 @@ class observer {
                 }
                 $licenserec = $DB->get_record('companylicense', array('id' => $licenseid));
                 $userlicenserec = $DB->get_record('companylicense_users', array('id' => $licenserecordid));
+/// Changed time started to null so report will display not started users
                 $entry = array('userid' => $userid,
                                'courseid' => $courseid,
                                'coursename' => $courserec->fullname,
@@ -638,7 +640,7 @@ class observer {
                                'licenseallocated' => $userlicenserec->issuedate,
                                'licensename' => $licenserec->name,
                                'timeenrolled' => $timeenrolled,
-                               'timestarted' => $timeenrolled,
+                               'timestarted' => NULL,
                                'modifiedtime' => $modifiedtime
                                );
                 $DB->insert_record('local_iomad_track', $entry);
