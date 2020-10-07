@@ -52,9 +52,9 @@ function email_reports_cron() {
     $allusers = $DB->get_records_sql($notcompletedsql);
 
     $periods = array(1 => " day",
-                     2 => " week",
-                     3 => " fortnight",
-                     4 => " month");
+        2 => " week",
+        3 => " fortnight",
+        4 => " month");
     foreach ($allusers as $compuser) {
         if (!$user = $DB->get_record('user', array('id' => $compuser->userid))) {
             continue;
@@ -72,7 +72,7 @@ function email_reports_cron() {
             if ($DB->get_records_sql("SELECT userid FROM {company_users}
                                       WHERE companyid IN (" . implode(',', array_keys($parentslist)) .")
                                       AND userid = :userid",
-                                      array('userid' => $compuser->userid))) {
+                array('userid' => $compuser->userid))) {
                 continue;
 
             }
@@ -88,9 +88,9 @@ function email_reports_cron() {
                                  AND ue.userid = :userid
                                  AND e.courseid = :courseid
                                  AND ra.roleid = :studentrole",
-                                 array('courseid' => $compuser->courseid,
-                                       'userid' => $compuser->userid,
-                                       'studentrole' => $studentrole->id))) {
+            array('courseid' => $compuser->courseid,
+                'userid' => $compuser->userid,
+                'studentrole' => $studentrole->id))) {
 
             // We want to remove them from the future list.
             $compuser->completedstop = 1;
@@ -124,8 +124,8 @@ function email_reports_cron() {
 
         // Check if we have sent any emails and if they are within the period.
         if ($DB->count_records('email', array('userid' => $compuser->userid,
-                                              'courseid' => $compuser->courseid,
-                                              'templatename' => 'completion_warn_user')) > 0) {
+                'courseid' => $compuser->courseid,
+                'templatename' => 'completion_warn_user')) > 0) {
             if (!empty($notifyperiod)) {
                 if (!$DB->get_records_sql("SELECT id FROM {email}
                                           WHERE userid = :userid
@@ -137,12 +137,12 @@ function email_reports_cron() {
                                              WHERE userid = :userid2
                                              AND courseid = :courseid2
                                              AND templatename = :templatename2)",
-                                          array('userid' => $compuser->userid,
-                                                'courseid' => $compuser->courseid,
-                                                'templatename' => 'completion_warn_user',
-                                                'userid2' => $compuser->userid,
-                                                'courseid2' => $compuser->courseid,
-                                                'templatename2' => 'completion_warn_user'))) {
+                    array('userid' => $compuser->userid,
+                        'courseid' => $compuser->courseid,
+                        'templatename' => 'completion_warn_user',
+                        'userid2' => $compuser->userid,
+                        'courseid2' => $compuser->courseid,
+                        'templatename2' => 'completion_warn_user'))) {
                     continue;
                 }
             }
@@ -161,10 +161,10 @@ function email_reports_cron() {
                                                  AND courseid = :courseid
                                                  AND templatename = :templatename
                                                  AND modifiedtime > :timesent",
-                                                 array('userid' => $compuser->userid,
-                                                       'courseid' => $compuser->courseid,
-                                                       'templatename' => $templateinfo->name,
-                                                       'timesent' => $compuser->timestarted));
+                array('userid' => $compuser->userid,
+                    'courseid' => $compuser->courseid,
+                    'templatename' => $templateinfo->name,
+                    'timesent' => $compuser->timestarted));
             if ($sentcount >= $templateinfo->repeatvalue) {
                 $compuser->completedstop = 1;
                 $compuser->modifiedtime = $runtime;
@@ -178,7 +178,7 @@ function email_reports_cron() {
         }
     }
 
-    mtrace("sending completion warning emails to the managers");
+    mtrace("Starting completion warning emails to the managers process");
     // Email the managers
     // Get the companies from the list of users in the temp table.
     $notcompletedcompanysql = "SELECT DISTINCT lit.companyid
@@ -191,7 +191,7 @@ function email_reports_cron() {
                                AND lit.timeenrolled < " . $runtime . " - (ic.warncompletion * 86400)
                                AND u.deleted = 0
                                AND u.suspended = 0";
-                               ///AND lit.completedstop = 0";
+    ///AND lit.completedstop = 0";
 
     $companies = $DB->get_records_sql($notcompletedcompanysql);
 ///    mtrace("completion report companies: ".json_encode($companies));
@@ -201,7 +201,9 @@ function email_reports_cron() {
         }
 
         if (!empty($companyrec->managernotify) && ($companyrec->managernotify == 1 || $companyrec->managernotify == 3)) {
-            if ($dayofweek == $companyrec->managerdigestday || empty($companyrec->managerdigestday)) {
+            /*** Sending managers digest only if its a work day (sunday to thursday) ***/
+            if ($dayofweek < 6) {
+                mtrace("Its a work day, continuing...");
 
                 // Deal with parent companies as we only want manager of this company.
                 $companyobj = new company($company->companyid);
@@ -214,18 +216,26 @@ function email_reports_cron() {
                 }
 
                 // Get the managers.
+                $firstsunday = date("Y-m-d", strtotime("first Sunday of ".date('M')." ".date('Y')."")) == date("Y-m-d",$runtime);
+
+                if ($firstsunday) {
+                    $managerssql = "AND managertype != 0";
+                    mtrace ("First sunday of the month sending to all levels");
+                }
+                elseif ($dayofweek == $companyrec->managerdigestday || empty($companyrec->managerdigestday)) {
+                    $managerssql = "AND (managertype = 2 OR managertype = 5)";
+                    mtrace ("Digest day, sending to department and unit managers");
+                }
+                else {
+                    $managerssql = "AND managertype = 2";
+                    mtrace ("Sending just to department managers");
+                }
                 $managers = $DB->get_records_sql("SELECT * FROM {company_users}
                                                   WHERE companyid = :companyid
-                                                  AND managertype != 0
+                                                  $managerssql
                                                   $companysql", array('companyid' => $company->companyid));
+
                 foreach ($managers as $manager) {
-                    // Department managers dont get reports on company manager users.
-            // Changed to false so department managers will recieve the report
-                    if ($manager->managertype == 2) {
-                        $departmentmanager = false;
-                    } else {
-                        $departmentmanager = false;
-                    }
 
                     // If this is a manager of a parent company - skip them.
                     if (!empty($parentslist) &&
@@ -262,18 +272,18 @@ function email_reports_cron() {
                                               AND lit.timeenrolled < " . $runtime . " - (ic.warncompletion * 86400)
                                               AND u.deleted = 0
                                               AND u.suspended = 0";
-                                              ///AND lit.completedstop = 0";
+                    ///AND lit.completedstop = 0";
 
                     $managerusers = $DB->get_records_sql($notcompleteddigestsql,
-                                                         array('managerid' => $manager->userid,
-                                                               'companyid' => $company->companyid));
+                        array('managerid' => $manager->userid,
+                            'companyid' => $company->companyid));
 
                     $summary = "<table><tr><th>" . get_string('firstname') . "</th>" .
-                               "<th>" . get_string('lastname') . "</th>" .
-                               "<th>" . get_string('email') . "</th>" .
-                               "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
-                               "<th>" . get_string('course') . "</th>" .
-                               "<th>" . get_string('timeenrolled', 'local_report_completion') ."</th></tr>";
+                        "<th>" . get_string('lastname') . "</th>" .
+                        "<th>" . get_string('email') . "</th>" .
+                        "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
+                    "<th>" . get_string('course') . "</th>" .
+                    "<th>" . get_string('timeenrolled', 'local_report_completion') ."</th></tr>";
                     $foundusers = false;
                     foreach ($managerusers as $manageruser) {
                         if (!$user = $DB->get_record('user', array('id' => $manageruser->userid))) {
@@ -282,7 +292,7 @@ function email_reports_cron() {
                         if (!$course = $DB->get_record('course', array('id' => $manageruser->courseid))) {
                             continue;
                         }
-                        if ($departmentmanager && $DB->get_record('company_users', array('companyid' => $company->companyid, 'managertype' => 1, 'userid' => $manageruser->userid))) {
+                        if ($DB->get_record('company_users', array('companyid' => $company->companyid, 'managertype' => 1, 'userid' => $manageruser->userid))) {
                             continue;
                         }
                         if (!$DB->get_record_sql("SELECT ra.id FROM
@@ -294,18 +304,18 @@ function email_reports_cron() {
                                                  AND ue.userid = :userid
                                                  AND e.courseid = :courseid
                                                  AND ra.roleid = :studentrole",
-                                                 array('courseid' => $manageruser->courseid,
-                                                       'userid' => $manageruser->userid,
-                                                       'studentrole' => $studentrole->id))) {
+                            array('courseid' => $manageruser->courseid,
+                                'userid' => $manageruser->userid,
+                                'studentrole' => $studentrole->id))) {
                             continue;
                         }
                         $foundusers = true;
 ///			mtrace("completion report managerUser: ".json_encode($manageruser));
                         $summary .= "<tr><td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->firstname . "</td>" .
-                                    "<td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->lastname . "</td></a>" .
-                                    "<td>" . $manageruser->email . "</td>" .
-                                    "<td>" . $manageruser->coursename . "</td>" .
-                                    "<td>" . date($CFG->iomad_date_format, $manageruser->timeenrolled) . "</td></tr>";
+                            "<td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->lastname . "</td></a>" .
+                            "<td>" . $manageruser->email . "</td>" .
+                            "<td>" . $manageruser->coursename . "</td>" .
+                            "<td>" . date($CFG->iomad_date_format, $manageruser->timeenrolled) . "</td></tr>";
                     }
                     $summary .= "</table>";
                     if ($foundusers && $user = $DB->get_record('user', array('id' => $manager->userid))) {
@@ -339,7 +349,7 @@ function email_reports_cron() {
                                                        AND licenseallocated < :time2
                                                        AND licenseallocated IS NOT NULL)
                                                    )",
-                                                   array('time1' => $checktime, 'time2' => $checktime, 'courseid' => $warnnotstartedcourse->courseid));
+            array('time1' => $checktime, 'time2' => $checktime, 'courseid' => $warnnotstartedcourse->courseid));
         foreach ($warnnotstartedusers as $notstarteduser) {
             if ($userrec = $DB->get_record('user', array('id' => $notstarteduser->userid, 'suspended' => 0, 'deleted' => 0))) {
                 if ($courserec = $DB->get_record('course', array('id' => $notstarteduser->courseid))) {
@@ -369,8 +379,8 @@ function email_reports_cron() {
 
                         // Check if we have sent any emails and if they are within the period.
                         if ($DB->count_records('email', array('userid' => $notstarteduser->userid,
-                                                              'courseid' => $notstarteduser->courseid,
-                                                              'templatename' => 'course_not_started_warning')) > 0) {
+                                'courseid' => $notstarteduser->courseid,
+                                'templatename' => 'course_not_started_warning')) > 0) {
                             if (!empty($notifyperiod)) {
                                 if (!$DB->get_records_sql("SELECT id FROM {email}
                                                           WHERE userid = :userid
@@ -382,12 +392,12 @@ function email_reports_cron() {
                                                              WHERE userid = :userid2
                                                              AND courseid = :courseid2
                                                              AND templatename = :templatename2)",
-                                                          array('userid' => $notstarteduser->userid,
-                                                                'courseid' => $notstarteduser->courseid,
-                                                                'templatename' => 'course_not_started_warning',
-                                                                'userid2' => $notstarteduser->userid,
-                                                                'courseid2' => $notstarteduser->courseid,
-                                                                'templatename2' => 'course_not_started_warning'))) {
+                                    array('userid' => $notstarteduser->userid,
+                                        'courseid' => $notstarteduser->courseid,
+                                        'templatename' => 'course_not_started_warning',
+                                        'userid2' => $notstarteduser->userid,
+                                        'courseid2' => $notstarteduser->courseid,
+                                        'templatename2' => 'course_not_started_warning'))) {
                                     continue;
                                 }
                             }
@@ -408,10 +418,10 @@ function email_reports_cron() {
                                                                  AND courseid = :courseid
                                                                  AND templatename = :templatename
                                                                  AND modifiedtime > :timesent",
-                                                                 array('userid' => $notstarteduser->userid,
-                                                                       'courseid' => $notstarteduser->courseid,
-                                                                       'templatename' => $templateinfo->name,
-                                                                       'timesent' => $notstarteduser->timeenrolled));
+                                array('userid' => $notstarteduser->userid,
+                                    'courseid' => $notstarteduser->courseid,
+                                    'templatename' => $templateinfo->name,
+                                    'timesent' => $notstarteduser->timeenrolled));
                             if ($sentcount >= $templateinfo->repeatvalue) {
                                 $notstarteduser->notstartedstop = 1;
                                 $notstarteduser->modifiedtime = $runtime;
@@ -470,7 +480,7 @@ function email_reports_cron() {
             if ($DB->get_records_sql("SELECT userid FROM {company_users}
                                       WHERE companyid IN (" . implode(',', array_keys($parentslist)) .")
                                       AND userid = :userid",
-                                      array('userid' => $compuser->userid))) {
+                array('userid' => $compuser->userid))) {
                 continue;
 
             }
@@ -485,14 +495,14 @@ function email_reports_cron() {
                                  AND ue.userid = :userid
                                  AND e.courseid = :courseid
                                  AND ra.roleid = :studentrole",
-                                 array('courseid' => $compuser->courseid,
-                                       'userid' => $compuser->userid,
-                                       'studentrole' => $studentrole->id))) {
+            array('courseid' => $compuser->courseid,
+                'userid' => $compuser->userid,
+                'studentrole' => $studentrole->id))) {
             // Expire the user from the course.
             $event = \block_iomad_company_admin\event\user_course_expired::create(array('context' => context_course::instance($course->id),
-                                                                                        'courseid' => $course->id,
-                                                                                        'objectid' => $course->id,
-                                                                                        'userid' => $user->id));
+                'courseid' => $course->id,
+                'objectid' => $course->id,
+                'userid' => $user->id));
             $event->trigger();
         }
 
@@ -521,8 +531,8 @@ function email_reports_cron() {
 
         // Check if we have sent any emails and if they are within the period.
         if ($DB->count_records('email', array('userid' => $compuser->userid,
-                                              'courseid' => $compuser->courseid,
-                                              'templatename' => 'expiry_warn_user')) > 0) {
+                'courseid' => $compuser->courseid,
+                'templatename' => 'expiry_warn_user')) > 0) {
             if (!empty($notifyperiod)) {
                 if (!$DB->get_records_sql("SELECT id FROM {email}
                                           WHERE userid = :userid
@@ -534,12 +544,12 @@ function email_reports_cron() {
                                              WHERE userid = :userid2
                                              AND courseid = :courseid2
                                              AND templatename = :templatename2)",
-                                          array('userid' => $compuser->userid,
-                                                'courseid' => $compuser->courseid,
-                                                'templatename' => 'expiry_warn_user',
-                                                'userid2' => $compuser->userid,
-                                                'courseid2' => $compuser->courseid,
-                                                'templatename2' => 'expiry_warn_user'))) {
+                    array('userid' => $compuser->userid,
+                        'courseid' => $compuser->courseid,
+                        'templatename' => 'expiry_warn_user',
+                        'userid2' => $compuser->userid,
+                        'courseid2' => $compuser->courseid,
+                        'templatename2' => 'expiry_warn_user'))) {
                     continue;
                 }
             }
@@ -558,10 +568,10 @@ function email_reports_cron() {
                                                  AND courseid = :courseid
                                                  AND templatename = :templatename
                                                  AND modifiedtime > :timesent",
-                                                 array('userid' => $compuser->userid,
-                                                       'courseid' => $compuser->courseid,
-                                                       'templatename' => $templateinfo->name,
-                                                       'timesent' => $compuser->timecompleted));
+                array('userid' => $compuser->userid,
+                    'courseid' => $compuser->courseid,
+                    'templatename' => $templateinfo->name,
+                    'timesent' => $compuser->timecompleted));
             if ($sentcount >= $templateinfo->repeatvalue) {
                 $compuser->expiredstop = 1;
                 $compuser->modifiedtime = $runtime;
@@ -648,13 +658,13 @@ function email_reports_cron() {
                                                           WHERE userid IN (" . $departmentids . ")
                                                           AND userid != :managerid
                                                           $companysql",
-                                                          array('managerid' => $manager->userid));
+                        array('managerid' => $manager->userid));
                     $summary = "<table><tr><th>" . get_string('firstname') . "</th>" .
-                               "<th>" . get_string('lastname') . "</th>" .
-                               "<th>" . get_string('email') . "</th>" .
-                               "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
-                               "<th>" . get_string('course') . "</th>" .
-                               "<th>" . get_string('completed', 'local_report_completion') ."</th></tr>";
+                        "<th>" . get_string('lastname') . "</th>" .
+                        "<th>" . get_string('email') . "</th>" .
+                        "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
+                    "<th>" . get_string('course') . "</th>" .
+                    "<th>" . get_string('completed', 'local_report_completion') ."</th></tr>";
                     $foundusers = false;
                     foreach ($managerusers as $manageruser) {
                         if (!$user = $DB->get_record('user', array('id' => $manageruser->userid))) {
@@ -686,11 +696,11 @@ function email_reports_cron() {
                             }
 
                             $summary .= "<tr><td>" . $manageruser->firstname . "</td>" .
-                                        "<td>" . $manageruser->lastname . "</td>" .
-                                        "<td>" . $manageruser->email . "</td>" .
-                                        "<td>" . $manageruser->departmentname . "</td>" .
-                                        "<td>" . $manageruser->coursename . "</td>" .
-                                        "<td>" . $datestring . "</td></tr>";
+                                "<td>" . $manageruser->lastname . "</td>" .
+                                "<td>" . $manageruser->email . "</td>" .
+                                "<td>" . $manageruser->departmentname . "</td>" .
+                                "<td>" . $manageruser->coursename . "</td>" .
+                                "<td>" . $datestring . "</td></tr>";
                         }
                         $summary .= "</table>";
                     }
@@ -719,9 +729,9 @@ function email_reports_cron() {
                                           JOIN {enrol} e ON (lit.courseid = e.courseid AND ue.enrolid = e.id)
                                           WHERE lit.courseid = :courseid
                                           AND lit.timecompleted + :expiretime < :runtime",
-                                          array('courseid' => $completionexpirecourse->courseid,
-                                                'expiretime' => $expiretime,
-                                                'runtime' => $runtime));
+            array('courseid' => $completionexpirecourse->courseid,
+                'expiretime' => $expiretime,
+                'runtime' => $runtime));
 
         //  Cycle through any found users.
         foreach ($userlist as $founduser) {
@@ -729,9 +739,9 @@ function email_reports_cron() {
                 mtrace("expiring user $founduser->userid from course $founduser->courseid");
                 // Expire the user from the course.
                 $event = \block_iomad_company_admin\event\user_course_expired::create(array('context' => context_course::instance($founduser->courseid),
-                                                                                            'courseid' => $founduser->courseid,
-                                                                                            'objectid' => $founduser->courseid,
-                                                                                            'userid' => $founduser->userid));
+                    'courseid' => $founduser->courseid,
+                    'objectid' => $founduser->courseid,
+                    'userid' => $founduser->userid));
                 $event->trigger();
             }
         }
@@ -743,7 +753,7 @@ function email_reports_cron() {
     $companies = $DB->get_records_sql("SELECT id FROM {company}
                                        WHERE managerdigestday = :dayofweek
                                        AND managernotify in (2,3)",
-                                       array('dayofweek' => $dayofweek));
+        array('dayofweek' => $dayofweek));
     foreach ($companies as $company) {
 
         // Deal with parent companies as we only want manager of this company.
@@ -802,13 +812,13 @@ function email_reports_cron() {
                                                   AND cc.userid != :managerid
                                                   $companysql
                                                   AND cc.timecompleted > :weekago",
-                                                  array('managerid' => $manager->userid, 'weekago' => $runtime - (60 * 60 * 24 * 7)));
+                array('managerid' => $manager->userid, 'weekago' => $runtime - (60 * 60 * 24 * 7)));
             $summary = "<table><tr><th>" . get_string('firstname') . "</th>" .
-                       "<th>" . get_string('lastname') . "</th>" .
-                       "<th>" . get_string('email') . "</th>" .
-                       "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
-                       "<th>" . get_string('course') . "</th>" .
-                       "<th>" . get_string('completed', 'local_report_completion') ."</th></tr>";
+                "<th>" . get_string('lastname') . "</th>" .
+                "<th>" . get_string('email') . "</th>" .
+                "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
+            "<th>" . get_string('course') . "</th>" .
+            "<th>" . get_string('completed', 'local_report_completion') ."</th></tr>";
             $foundusers = false;
             foreach ($managerusers as $manageruser) {
                 if (!$user = $DB->get_record('user', array('id' => $manageruser->userid))) {
@@ -823,27 +833,27 @@ function email_reports_cron() {
                 }
 
                 $summary = "<table><tr><th>" . get_string('firstname') . "</th>" .
-                           "<th>" . get_string('lastname') . "</th>" .
-                           "<th>" . get_string('email') . "</th>" .
-                           "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
-                           "<th>" . get_string('course') . "</th>" .
-                           "<th>" . get_string('completed', 'local_report_completion') ."</th></tr>";
+                    "<th>" . get_string('lastname') . "</th>" .
+                    "<th>" . get_string('email') . "</th>" .
+                    "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
+                "<th>" . get_string('course') . "</th>" .
+                "<th>" . get_string('completed', 'local_report_completion') ."</th></tr>";
                 if ($managerusers = $DB->get_records_sql("SELECT u.firstname, u.lastname, u.email, c.fullname, cc.timecompleted
                                                           FROM {course_completions} cc
                                                           JOIN {user} u ON (cc.userid = u.id)
                                                           JOIN {course} c ON (cc.course = c.id)
                                                           WHERE cc.userid IN (" . $departmentids . ")
                                                           AND cc.timecompleted > :weekago",
-                                                          array('weekago' => $timenow - (60 * 60 * 24 * 7)))) {
+                    array('weekago' => $timenow - (60 * 60 * 24 * 7)))) {
                     foreach ($managerusers as $manageruser) {
                         $datestring = date($CFG->iomad_date_format, $manageruser->timecompleted) . "\n";
 
                         $summary .= "<tr><td>" . $manageruser->firstname . "</td>" .
-                                    "<td>" . $manageruser->lastname . "</td>" .
-                                    "<td>" . $manageruser->email . "</td>" .
-                                    "<td>" . $manageruser->departmentname . "</td>" .
-                                    "<td>" . $manageruser->fullname . "</td>" .
-                                    "<td>" . $datestring . "</td></tr>";
+                            "<td>" . $manageruser->lastname . "</td>" .
+                            "<td>" . $manageruser->email . "</td>" .
+                            "<td>" . $manageruser->departmentname . "</td>" .
+                            "<td>" . $manageruser->fullname . "</td>" .
+                            "<td>" . $datestring . "</td></tr>";
                     }
                     $summary .= "</table>";
 
