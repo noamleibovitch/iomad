@@ -205,8 +205,6 @@ function email_reports_cron() {
             ///if ($dayofweek == $companyrec->managerdigestday || empty($companyrec->managerdigestday)) {
             if ($dayofweek < 6) {
                 mtrace("Its a work day, continuing...");
-                mtrace(date("Y-m-d", strtotime("first Sunday of ".date('M')." ".date('Y')."")));
-                mtrace (date("Y-m-d",$runtime));
                 // Deal with parent companies as we only want manager of this company.
                 $companyobj = new company($company->companyid);
                 if ($parentslist = $companyobj->get_parent_companies_recursive()) {
