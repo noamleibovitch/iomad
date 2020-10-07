@@ -202,9 +202,11 @@ function email_reports_cron() {
 
         if (!empty($companyrec->managernotify) && ($companyrec->managernotify == 1 || $companyrec->managernotify == 3)) {
             /*** Sending managers digest only if its a work day (sunday to thursday) ***/
+            ///if ($dayofweek == $companyrec->managerdigestday || empty($companyrec->managerdigestday)) {
             if ($dayofweek < 6) {
                 mtrace("Its a work day, continuing...");
-
+                mtrace(date("Y-m-d", strtotime("first Sunday of ".date('M')." ".date('Y')."")));
+                mtrace (date("Y-m-d",$runtime));
                 // Deal with parent companies as we only want manager of this company.
                 $companyobj = new company($company->companyid);
                 if ($parentslist = $companyobj->get_parent_companies_recursive()) {
@@ -258,11 +260,12 @@ function email_reports_cron() {
                             $departmentids .= $departmentuser->userid;
                         }
                     }
-                    $notcompleteddigestsql = "SELECT lit.*, c.name AS companyname, ic.notifyperiod, u.firstname,u.lastname,u.username,u.email,u.lang
+                    $notcompleteddigestsql = "SELECT lit.*,d.name AS department, c.name AS companyname, ic.notifyperiod, u.firstname,u.lastname,u.username,u.email,u.lang
                                               FROM {local_iomad_track} lit
                                               JOIN {company} c ON (lit.companyid = c.id)
                                               JOIN {iomad_courses} ic ON (lit.courseid = ic.courseid)
                                               JOIN {user} u ON (lit.userid = u.id)
+					      JOIN {department} d ON (u.department = d.id)
                                               WHERE lit.companyid = :companyid
                                               AND lit.userid IN (" . $departmentids . ")
                                               AND lit.userid != :managerid
@@ -278,12 +281,12 @@ function email_reports_cron() {
                         array('managerid' => $manager->userid,
                             'companyid' => $company->companyid));
 
-                    $summary = "<table><tr><th>" . get_string('firstname') . "</th>" .
-                        "<th>" . get_string('lastname') . "</th>" .
-                        "<th>" . get_string('email') . "</th>" .
+                    $summary = "<table dir='rtl' align='right'><tr><th>" . get_string('firstname', 'block_iomad_company_admin') . "</th>" .
+                        "<th>" . get_string('lastname', 'block_iomad_company_admin') . "</th>" .
+                        "<th>" . get_string('email', 'block_iomad_company_admin') . "</th>" .
                         "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
-                    "<th>" . get_string('course') . "</th>" .
-                    "<th>" . get_string('timeenrolled', 'local_report_completion') ."</th></tr>";
+                    "<th>" . get_string('course', 'block_iomad_company_admin') . "</th>" .
+                    "<th>" . get_string('timeenrolled', 'block_iomad_company_admin') ."</th></tr>";
                     $foundusers = false;
                     foreach ($managerusers as $manageruser) {
                         if (!$user = $DB->get_record('user', array('id' => $manageruser->userid))) {
@@ -314,6 +317,7 @@ function email_reports_cron() {
                         $summary .= "<tr><td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->firstname . "</td>" .
                             "<td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->lastname . "</td></a>" .
                             "<td>" . $manageruser->email . "</td>" .
+                            "<td>" . $manageruser->department . "</td>" .
                             "<td>" . $manageruser->coursename . "</td>" .
                             "<td>" . date($CFG->iomad_date_format, $manageruser->timeenrolled) . "</td></tr>";
                     }
