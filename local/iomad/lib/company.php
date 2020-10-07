@@ -112,6 +112,14 @@ class company {
         if (iomad::has_capability('block/iomad_company_admin:assign_department_manager', $systemcontext)) {
             $returnarray['2'] = get_string('departmentmanager', 'block_iomad_company_admin');
         }
+        /*** Added unit and senior manager types - Modified by Noam Leibovitch ***/
+        if (iomad::has_capability('block/iomad_company_admin:assign_department_manager', $systemcontext)) {
+            $returnarray['5'] = get_string('unitmanager', 'block_iomad_company_admin');
+        }
+        if (iomad::has_capability('block/iomad_company_admin:assign_department_manager', $systemcontext)) {
+            $returnarray['6'] = get_string('seniormanager', 'block_iomad_company_admin');
+        }
+        /*** Modification END ***/
         if (!$CFG->iomad_autoenrol_managers && iomad::has_capability('block/iomad_company_admin:assign_educator', $systemcontext)) {
             $returnarray['3'] = get_string('educator', 'block_iomad_company_admin');
         }

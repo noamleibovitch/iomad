@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+$string['unitmanager'] = 'Unit Manager';
+$string['seniormanager'] = 'Senior Manager';
 $string['actions'] = 'Actions';
 $string['addnewchildcompany'] = 'Add a new child company';
 $string['addnewcompany'] = 'Add a new company';
