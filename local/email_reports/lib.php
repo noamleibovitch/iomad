@@ -279,7 +279,7 @@ function email_reports_cron() {
                         array('managerid' => $manager->userid,
                             'companyid' => $company->companyid));
 
-                    $summary = "<table dir='rtl' align='right'><tr><th>" . get_string('firstname', 'block_iomad_company_admin') . "</th>" .
+                    $summary = "<table dir='rtl' align='right' border='1' text-align='right' width='100%'><tr><th>" . get_string('firstname', 'block_iomad_company_admin') . "</th>" .
                         "<th>" . get_string('lastname', 'block_iomad_company_admin') . "</th>" .
                         "<th>" . get_string('email', 'block_iomad_company_admin') . "</th>" .
                         "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
