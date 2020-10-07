@@ -841,7 +841,7 @@ class current_department_user_selector extends user_selector_base {
         }
 
         if ($search) {
-            if ($this->roletype == 2) {
+            if ($this->roletype == 2 or $this->roletype == 5 or $this->roletype == 6) {
                 $groupname = get_string('departmentmanagersmatching', 'block_iomad_company_admin', $search);
             } else if ($this->roletype == 0) {
                 $groupname = get_string('departmentusersmatching', 'block_iomad_company_admin', $search);
@@ -851,7 +851,7 @@ class current_department_user_selector extends user_selector_base {
                 $groupname = get_string('curusersmatching', 'block_iomad_company_admin', $search);
             }
         } else {
-            if ($this->roletype == 2) {
+            if ($this->roletype == 2 or $this->roletype == 5 or $this->roletype == 6) {
                 $groupname = get_string('departmentmanagers', 'block_iomad_company_admin');
             } else if ($this->roletype == 0) {
                 $groupname = get_string('departmentusers', 'block_iomad_company_admin');
