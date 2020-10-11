@@ -1047,7 +1047,7 @@ class company {
                                        array('company' => $company->companyrecord,
                                              'user' => $userrec));
                     }
-                } else if ($managertype == 2) {
+                } else if ($managertype == 2 or $managertype == 5 or $managertype == 6) {
                     // Give them the department manager role.
                     role_unassign($companymanagerrole->id, $userid, $systemcontext->id);
                     role_unassign($companyreporterrole->id, $userid, $systemcontext->id);
@@ -1182,7 +1182,7 @@ class company {
                                                  'user' => $userrec));
                         }
                     }
-                } else if ($managertype == 2) {
+                } else if ($managertype == 2 or $managertype == 5 or $managertype == 6) {
                     // Give them the department manager role.
                     role_unassign($companymanagerrole->id, $userid, $systemcontext->id);
                     role_unassign($companyreporterrole->id, $userid, $systemcontext->id);
@@ -3603,7 +3603,7 @@ class company {
             }
         }
 
-        if ($managertype == 2) {
+        if ($managertype == 2 or $managertype == 5 or $managertype == 6) {
             if ($DB->get_records('email_template', array('companyid' => $this->id, 'name' => $templatename, 'disabledsupervisor' => 1))) {
                 // Disabled for the company.
                 return false;
