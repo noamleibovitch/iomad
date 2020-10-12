@@ -258,7 +258,7 @@ function email_reports_cron() {
                             $departmentids .= $departmentuser->userid;
                         }
                     }
-                    $notcompleteddigestsql = "SELECT lit.*,d.name AS department, c.name AS companyname, ic.notifyperiod, u.firstname,u.lastname,u.username,u.email,u.lang
+                    $notcompleteddigestsql = "SELECT lit.*,d.name AS department, c.name AS companyname,ic.warncompletion, ic.notifyperiod, u.firstname,u.lastname,u.username,u.email,u.lang
                                               FROM {local_iomad_track} lit
                                               JOIN {company} c ON (lit.companyid = c.id)
                                               JOIN {iomad_courses} ic ON (lit.courseid = ic.courseid)
@@ -282,9 +282,10 @@ function email_reports_cron() {
                     $summary = "<table dir='rtl' align='right' border='1' text-align='right' width='100%'><tr><th>" . get_string('firstname', 'block_iomad_company_admin') . "</th>" .
                         "<th>" . get_string('lastname', 'block_iomad_company_admin') . "</th>" .
                         "<th>" . get_string('email', 'block_iomad_company_admin') . "</th>" .
-                        "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>";
-                    "<th>" . get_string('course', 'block_iomad_company_admin') . "</th>" .
-                    "<th>" . get_string('timeenrolled', 'block_iomad_company_admin') ."</th></tr>";
+                        "<th>" . get_string('department', 'block_iomad_company_admin') ."</th>".
+                        "<th>" . get_string('course', 'block_iomad_company_admin') . "</th>" .
+                        "<th>" . get_string('timeenrolled', 'block_iomad_company_admin') ."</th>".
+                        "<th>" . get_string('completionwarndate', 'block_iomad_company_admin') ."</th></tr>";
                     $foundusers = false;
                     foreach ($managerusers as $manageruser) {
                         if (!$user = $DB->get_record('user', array('id' => $manageruser->userid))) {
@@ -317,7 +318,8 @@ function email_reports_cron() {
                             "<td>" . $manageruser->email . "</td>" .
                             "<td>" . $manageruser->department . "</td>" .
                             "<td>" . $manageruser->coursename . "</td>" .
-                            "<td>" . date($CFG->iomad_date_format, $manageruser->timeenrolled) . "</td></tr>";
+                            "<td>" . date($CFG->iomad_date_format, $manageruser->timeenrolled) . "</td>".
+                            "<td>" . date($CFG->iomad_date_format, $manageruser->warncompletion*86400+$manageruser->timeenrolled) . "</td></tr>";
                     }
                     $summary .= "</table>";
                     if ($foundusers && $user = $DB->get_record('user', array('id' => $manager->userid))) {
