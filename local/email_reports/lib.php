@@ -258,7 +258,7 @@ function email_reports_cron() {
                             $departmentids .= $departmentuser->userid;
                         }
                     }
-                    $notcompleteddigestsql = "SELECT lit.*,d.name AS department, c.name AS companyname,ic.warncompletion, ic.notifyperiod, u.firstname,u.lastname,u.username,u.email,u.lang
+                    $notcompleteddigestsql = "SELECT lit.*,d.name AS department, c.name AS companyname,ic.warncompletion, ic.notifyperiod, u.phone2, u.firstname,u.lastname,u.username,u.email,u.lang
                                               FROM {local_iomad_track} lit
                                               JOIN {company} c ON (lit.companyid = c.id)
                                               JOIN {iomad_courses} ic ON (lit.courseid = ic.courseid)
@@ -312,10 +312,15 @@ function email_reports_cron() {
                             continue;
                         }
                         $foundusers = true;
-///			mtrace("completion report managerUser: ".json_encode($manageruser));
+                        ///mtrace("completion report managerUser: ".json_encode($manageruser));
+                        $body = "שלום ". $manageruser->firstname;
+                        $body.= ". טרם השלמת את הכשרת ".$manageruser->coursename." כאשר תאריך היעד להשלמה היה ". date($CFG->iomad_date_format, $manageruser->warncompletion*86400+$manageruser->timeenrolled);
+                        $action = "<a href='mailto:" . 	$manageruser->email
+                            . "?cc=".$manageruser->phone2."@meksms.mekorot.co.il&subject=%D7%AA%D7%96%D7%9B%D7%95%D7%A8%D7%AA%20%D7%9C%D7%92%D7%91%D7%99%20%D7%94%D7%9B%D7%A9%D7%A8%D7%AA%20".$manageruser->coursename
+                            ."&body=".$body."'>לחץ לשליחת תזכורת למייל וסמס</a>";
                         $summary .= "<tr><td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->firstname . "</td>" .
                             "<td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->lastname . "</td></a>" .
-                            "<td>" . $manageruser->email . "</td>" .
+                            "<td>" . $action . "</td>" .
                             "<td>" . $manageruser->department . "</td>" .
                             "<td>" . $manageruser->coursename . "</td>" .
                             "<td>" . date($CFG->iomad_date_format, $manageruser->timeenrolled) . "</td>".
