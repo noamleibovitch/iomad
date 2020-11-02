@@ -887,8 +887,8 @@ class company {
             $departmentid = $defaultdepartment->id;
         }
 
-        // Were we passed a manager type?  Check it.
-        if ($managertype > 2) {
+        // Were we passed a manager type?  Check it. Modified by Noam to support new managers role
+        if ($managertype > 6) {
             // Default is standard user.
             $managertype = 0;
         }
@@ -912,11 +912,11 @@ class company {
         $userrecord['userid'] = $userid;
         $userrecord['managertype'] = $managertype;
         $userrecord['companyid'] = $this->id;
-
-        if ($DB->get_record('company_users', array('companyid' => $this->id, 'userid' => $userid))) {
-            // Already in this company.  Nothing left to do.
-            return true;
-        }
+// Removed to unify move and assign users
+//        if ($DB->get_record('company_users', array('companyid' => $this->id, 'userid' => $userid))) {
+//            // Already in this company.  Nothing left to do.
+//            return true;
+//        }
 
         // Moving a user.
         if ($CFG->iomad_autoenrol_managers && $managertype > 0 ) {
