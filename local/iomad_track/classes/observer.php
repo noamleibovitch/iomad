@@ -655,10 +655,18 @@ class observer {
      * @param object $event the event object
      */
     public static function user_enrolment_deleted($event) {
+        /// Written by Noam - remove record from local track on unenrollment
+        /// need to modify if we want to maintain retake history
         global $DB;
-
-        // Do nothing for now.
-
+        $userid = $event->relateduserid;
+        $courseid = $event->courseid;
+        $timeenrolled = $event->timecreated;
+        $modifiedtime = $event->timecreated;
+        if ($entry = $DB->get_record('local_iomad_track', array('userid' => $userid,
+            'courseid' => $courseid,
+            'timecompleted' => null))) {
+                $DB->delete_records('local_iomad_track', array('id' => $entry->id));
+        }
         return true;
     }
 
