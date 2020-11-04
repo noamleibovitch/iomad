@@ -247,6 +247,10 @@ function email_reports_cron() {
                                               ", array('userid' => $manager->userid))) {
                         continue;
                     }
+                    $delay = 0;
+                    if ($manager->managertype != 2) {
+                        $delay = 5 * 86400;
+                    }
 
                     // Get their users.
                     $departmentusers = company::get_recursive_department_users($manager->departmentid);
@@ -270,7 +274,7 @@ function email_reports_cron() {
                                               $companysql
                                               AND ic.warncompletion > 0
                                               AND lit.timecompleted IS NULL
-                                              AND lit.timeenrolled < " . $runtime . " - (ic.warncompletion * 86400)
+                                              AND lit.timeenrolled < " . $runtime . " - (ic.warncompletion * 86400) - ".$delay."
                                               AND u.deleted = 0
                                               AND u.suspended = 0";
                     ///AND lit.completedstop = 0";
