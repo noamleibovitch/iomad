@@ -318,7 +318,11 @@ function email_reports_cron() {
                         $foundusers = true;
                         ///mtrace("completion report managerUser: ".json_encode($manageruser));
                         $body = "שלום ". $manageruser->firstname;
-                        $body.= ". טרם השלמת את הכשרת ".$manageruser->coursename." כאשר תאריך היעד להשלמה היה ". date($CFG->iomad_date_format, $manageruser->warncompletion*86400+$manageruser->timeenrolled);
+                        $body .="%0d%0a";
+                        $body .= ". טרם השלמת את הכשרת ".$manageruser->coursename." כאשר תאריך היעד להשלמה היה ". date($CFG->iomad_date_format, $manager>
+                                $body .="%0d%0a";
+                        $body .= "גישה לקורס בקישור הבא: %0d%0a";
+                        $body .= urlencode($CFG->wwwroot."/course/view.php?id=".$manageruser->courseid);
                         $action = "<a href='mailto:" . 	$manageruser->email
                             . "?cc=".$manageruser->phone2."@meksms.mekorot.co.il&subject=%D7%AA%D7%96%D7%9B%D7%95%D7%A8%D7%AA%20%D7%9C%D7%92%D7%91%D7%99%20%D7%94%D7%9B%D7%A9%D7%A8%D7%AA%20".$manageruser->coursename
                             ."&body=".$body."'>לחץ לשליחת תזכורת למייל וסמס</a>";
