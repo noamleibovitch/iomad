@@ -91,9 +91,9 @@ if ($courseid) {
 if ($departmentid) {
     $params['departmentid'] = $departmentid;
 }
-if ($departmentid) {
+/*if ($departmentid) {
     $params['departmentid'] = $departmentid;
-}
+}*/
 if ($showsuspended) {
     $params['showsuspended'] = $showsuspended;
 }
@@ -166,7 +166,11 @@ if (!empty($courseid)) {
 $PAGE->requires->js_call_amd('block_iomad_company_admin/department_select', 'init', array('departmentid', 1, optional_param('departmentid', 0, PARAM_INT)));
 
 // Set the page heading.
-$PAGE->set_heading(get_string('pluginname', 'block_iomad_reports') . " - $strcompletion");
+$cn='';
+if (!empty($courseid)) {
+	$cn = ": ".format_string($course->fullname, true, 1);
+}
+$PAGE->set_heading("$strcompletion".$cn);
 
 // get output renderer
 $output = $PAGE->get_renderer('block_iomad_company_admin');
@@ -342,11 +346,13 @@ if (empty($courseid)) {
 
     // Deal with any course searches.
     $searchparams = array();
+    $courseIds = array_keys($company->get_menu_courses(true)); 
+//********************************************************//
     if (!empty($coursesearch)) {
         $coursesearchsql = " AND courseid IN (" . join(',', array_keys($company->get_menu_courses(true))) . ") AND " . $DB->sql_like('coursename', ':coursename', false, false);
         $searchparams['coursename'] = "%" . $coursesearch . "%";
     } else {
-        $coursesearchsql = " AND courseid IN (" . join(',', array_keys($company->get_menu_courses(true))) . ") ";
+        $coursesearchsql = " AND courseid IN (" . join(',', $courseIds) . ") ";
     }
 
     // Set up the SQL for the table.
@@ -490,8 +496,8 @@ if (empty($courseid)) {
     }
 
     // Set up the initial SQL for the form.
-    $selectsql = "lit.id,u.id as userid,u.firstname,u.lastname,d.name AS department,u.email,lit.id as certsource, lit.courseid,lit.coursename,lit.timecompleted,lit.timeenrolled,lit.timestarted,lit.timeexpires,lit.finalscore,lit.licenseid,lit.licensename, lit.licenseallocated";
-    $fromsql = "{user} u JOIN {local_iomad_track} lit ON (u.id = lit.userid) JOIN {company_users} cu ON (u.id = cu.userid AND lit.userid = cu.userid AND lit.companyid = cu.companyid) JOIN {department} d ON (cu.departmentid = d.id)";
+    $selectsql = "lit.id,u.id as userid,u.firstname,u.lastname,d.name AS department,u.email,lit.id as certsource, lit.courseid,lit.coursename,lit.timecompleted,lit.timeenrolled,lit.timestarted,(lit.timeenrolled + ic.warncompletion*86400) as timetofinish, lit.timeexpires,lit.finalscore,lit.licenseid,lit.licensename, lit.licenseallocated";
+    $fromsql = "{user} u JOIN {local_iomad_track} lit ON (u.id = lit.userid) JOIN {company_users} cu ON (u.id = cu.userid AND lit.userid = cu.userid AND lit.companyid = cu.companyid) JOIN {department} d ON (cu.departmentid = d.id) JOIN {iomad_courses} ic on (lit.courseid = ic.courseid)";
     $wheresql = $searchinfo->sqlsearch . " AND cu.companyid = :companyid $departmentsql $companysql $datesql $coursesql $validsql";
     $sqlparams = $sqlparams + $searchinfo->searchparams;
 
@@ -558,10 +564,16 @@ if (empty($courseid)) {
     $columns[] = 'timecompleted';
 
     // Does this course have an expiry time?
-    if (($courseid == 1 && $DB->get_records_sql("SELECT id FROM {iomad_courses} WHERE courseid IN (SELECT courseid FROM {local_iomad_track} WHERE companyid = :companyid) AND expireafter != 0", array('companyid' => $company->id))) ||
+    /*if (($courseid == 1 && $DB->get_records_sql("SELECT id FROM {iomad_courses} WHERE courseid IN (SELECT courseid FROM {local_iomad_track} WHERE companyid = :companyid) AND expireafter != 0", array('companyid' => $company->id))) ||
         $DB->get_record_sql("SELECT id FROM {iomad_courses} WHERE courseid = :courseid AND validlength > 0", array('courseid' => $courseid))) {
-        $columns[] = 'timeexpires';
+        $columns[] = 'timeerolled';
         $headers[] = get_string('timeexpires', 'local_report_completion');
+    }*/
+    // Added By Noam - Does this course have an time to finish?
+    if (($courseid == 1 && $DB->get_records_sql("SELECT id FROM {iomad_courses} WHERE courseid IN (SELECT courseid FROM {local_iomad_track} WHERE companyid = :companyid) AND hasgrade = 1", array('companyid' => $company->id))) ||
+        $DB->get_record_sql("SELECT id FROM {iomad_courses} WHERE courseid = :courseid AND warncompletion  > 0", array('courseid' => $courseid))) {
+        $columns[] = 'timetofinish';
+	$headers[] = get_string('timeexpires', 'local_report_completion');    
     }
 
     // Does this course have an visible grade?

@@ -63,23 +63,3 @@ class event_observers {
 	    }
 
 }
-
-function agent_log ($debug){
-	
-	file_put_contents ('/var/www/html/log.txt',PHP_EOL .date('D, d M Y H:i:s'). serialize($debug), FILE_APPEND);
-	}
-	
-function updateSap($event) {
-	 global $CFG, $DB;
-		echo "User comleted a course event fired";
-		agent_log("User comleted a course event fired");
-        $eventdata = $event->get_data();
-        $user = \core_user::get_user($eventdata['objectid']);
-		//Retrieve the course id and user id from the eventdata objects
-		agent_log ($eventdata);
-		$lmsid = $eventdata->{'userid'};
-		$courseid = $eventdata->{'course'};
-		$grade= grade_get_course_grade($lmsid, $courseid);	
-		$grade= $grade->str_grade;
-    return;
-}

@@ -517,7 +517,7 @@ class observer {
      */
     public static function user_enrolment_created($event) {
         global $DB;
-
+	file_put_contents ('/var/www/html/log.txt',PHP_EOL .date('D, d M Y H:i:s'). "enrolment cought", FILE_APPEND);
         $userid = $event->relateduserid;
         $courseid = $event->courseid;
         $timeenrolled = $event->timecreated;
@@ -528,14 +528,27 @@ class observer {
             // Ignore it we capture a different event for those.
             return true;
         }
-
+        /*$timestarted = NULL;
+	$timecompleted = NULL;
+        if ($completionrec = $DB->get_record('course_completions', array('userid' => $userid,
+            'course' => $courseid))) {
+            $timestarted = $completionrec->timestarted;
+            $timeenrolled = $completionrec->timeenrolled;
+            if (($timeenrolled == 0) ||($timeenroled == NULL)){
+		$timeenrolled = $timestarted;
+} 
+	   // $timecompleted = $completionrec->timecompleted;
+	file_put_contents ('/var/www/html/log.txt',PHP_EOL .date('D, d M Y H:i:s'), FILE_APPEND);
+	file_put_contents ('/var/www/html/log.txt',PHP_EOL .date('D, d M Y H:i:s :').json_encode($completionrec), FILE_APPEND);
+        }*/
         // Check if there is already an entry for this.
         if ($entry = $DB->get_record('local_iomad_track', array('userid' => $userid,
-                                                                'courseid' => $courseid,
-                                                                'timecompleted' => null))) {
+                                                                'courseid' => $courseid))) {
             // We already have an entry.  Change the issue time.
             $entry->timeenrolled = $timeenrolled;
+    //        $entry->timestarted = $timestarted;
             $entry->modifiedtime = $modifiedtime;
+    //        $entry->timecompleted = $timecompleted;
             $DB->update_record('local_iomad_track', $entry);
         } else {
             // Create one.
@@ -564,12 +577,12 @@ class observer {
                     $companyid = 0;
                 }
   /// Changed time started to null so report will display not started users
+
                 $entry = array('userid' => $userid,
                                'courseid' => $courseid,
                                'coursename' => $courserec->fullname,
                                'companyid' => $companyid,
                                'timeenrolled' => $timeenrolled,
-                               'timestarted' => NULL,
                                'modifiedtime' => $modifiedtime
                                );
                 $DB->insert_record('local_iomad_track', $entry);
@@ -746,3 +759,4 @@ class observer {
         return true;
     }
 }
+

@@ -262,27 +262,28 @@ function email_reports_cron() {
                             $departmentids .= $departmentuser->userid;
                         }
                     }
-                    $notcompleteddigestsql = "SELECT lit.*,d.name AS department, c.name AS companyname,ic.warncompletion, ic.notifyperiod, u.phone2, u.firstname,u.lastname,u.username,u.email,u.lang
+			//mtrace ("departmentids: ". $departmentids);
+                    $notcompleteddigestsql = "SELECT lit.*, c.name AS companyname,ic.daysbeforecompletion, ic.warncompletion, ic.notifyperiod, u.phone2, u.firstname,u.lastname,u.username,u.email,u.lang
                                               FROM {local_iomad_track} lit
                                               JOIN {company} c ON (lit.companyid = c.id)
                                               JOIN {iomad_courses} ic ON (lit.courseid = ic.courseid)
                                               JOIN {user} u ON (lit.userid = u.id)
-					      JOIN {department} d ON (u.department = d.id)
                                               WHERE lit.companyid = :companyid
                                               AND lit.userid IN (" . $departmentids . ")
                                               AND lit.userid != :managerid
                                               $companysql
                                               AND ic.warncompletion > 0
                                               AND lit.timecompleted IS NULL
-                                              AND lit.timeenrolled < " . $runtime . " - (ic.warncompletion * 86400) - ".$delay."
+                                              AND lit.timeenrolled < " . $runtime . " - ((ic.warncompletion - ic.daysbeforecompletion) * 86400) - ".$delay."
                                               AND u.deleted = 0
                                               AND u.suspended = 0";
                     ///AND lit.completedstop = 0";
+		///mtrace ("managerID: ".$manager->userid." CompanyID: ".$company->companyid." sql: ". $notcompleteddigestsql);
 
                     $managerusers = $DB->get_records_sql($notcompleteddigestsql,
                         array('managerid' => $manager->userid,
                             'companyid' => $company->companyid));
-
+		///	mtrace("completion report managerUser: ".json_encode($managerusers));
                     $summary = "<table dir='rtl' align='right' border='1' text-align='right' width='100%'><tr><th>" . get_string('firstname', 'block_iomad_company_admin') . "</th>" .
                         "<th>" . get_string('lastname', 'block_iomad_company_admin') . "</th>" .
                         "<th>" . get_string('email', 'block_iomad_company_admin') . "</th>" .
@@ -319,17 +320,17 @@ function email_reports_cron() {
                         ///mtrace("completion report managerUser: ".json_encode($manageruser));
                         $body = "שלום ". $manageruser->firstname;
                         $body .="%0d%0a";
-                        $body .= ". טרם השלמת את הכשרת ".$manageruser->coursename." כאשר תאריך היעד להשלמה היה ". date($CFG->iomad_date_format, $manager>
-                                $body .="%0d%0a";
-                        $body .= "גישה לקורס בקישור הבא: %0d%0a";
-                        $body .= urlencode($CFG->wwwroot."/course/view.php?id=".$manageruser->courseid);
-                        $action = "<a href='mailto:" . 	$manageruser->email
+			$body .= ". טרם השלמת את הכשרת ".$manageruser->coursename." כאשר תאריך היעד להשלמה היה ". date($CFG->iomad_date_format, $manageruser->warncompletion*86400+$manageruser->timeenrolled);
+                        $body .="%0d%0a";
+			$body .= "גישה לקורס בקישור הבא: %0d%0a";
+			$body .= urlencode($CFG->wwwroot."/course/view.php?id=").$manageruser->courseid;
+			$action = "<a href='mailto:" . 	$manageruser->email
                             . "?cc=".$manageruser->phone2."@meksms.mekorot.co.il&subject=%D7%AA%D7%96%D7%9B%D7%95%D7%A8%D7%AA%20%D7%9C%D7%92%D7%91%D7%99%20%D7%94%D7%9B%D7%A9%D7%A8%D7%AA%20".$manageruser->coursename
                             ."&body=".$body."'>לחץ לשליחת תזכורת למייל וסמס</a>";
                         $summary .= "<tr><td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->firstname . "</td>" .
                             "<td><a href='".$CFG->wwwroot."/local/report_users/userdisplay.php?userid=".$manageruser->userid ."' target='_blank'>" . $manageruser->lastname . "</td></a>" .
                             "<td>" . $action . "</td>" .
-                            "<td>" . $manageruser->department . "</td>" .
+                            "<td>" . company_user::get_department_name($manageruser->userid) . "</td>" .
                             "<td>" . $manageruser->coursename . "</td>" .
                             "<td>" . date($CFG->iomad_date_format, $manageruser->timeenrolled) . "</td>".
                             "<td>" . date($CFG->iomad_date_format, $manageruser->warncompletion*86400+$manageruser->timeenrolled) . "</td></tr>";
@@ -888,3 +889,4 @@ function email_reports_cron() {
 
     mtrace("email reporting cron completed at " . date('D M Y h:m:s', time()));
 }
+

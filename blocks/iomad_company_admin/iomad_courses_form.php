@@ -32,6 +32,7 @@ $validfor = optional_param('validfor', 0, PARAM_INTEGER);
 $warnnotstarted = optional_param('warnnotstarted', 0, PARAM_INTEGER);
 $warnexpire = optional_param('warnexpire', 0, PARAM_INTEGER);
 $warncompletion = optional_param('warncompletion', 0, PARAM_INTEGER);
+$daysbeforecompletion = optional_param('daysbeforecompletion', 0, PARAM_INTEGER);
 $notifyperiod = optional_param('notifyperiod', 0, PARAM_INTEGER);
 $expireafter = optional_param('expireafter', 0, PARAM_INTEGER);
 $hasgrade = optional_param('hasgrade', 1, PARAM_INTEGER);
@@ -236,6 +237,15 @@ if (!empty($update)) {
             }
             $coursedetails['warncompletion'] = $warncompletion;
             $DB->update_record('iomad_courses', $coursedetails);
+	//Added By Noam
+	} else if ('daysbeforecompletion' == $update) {
+            // Work out the time in seconds....
+            if ($daysbeforecompletion < 0) {
+                $daysbeforecompletion = 0;
+            }
+            $coursedetails['daysbeforecompletion'] = $daysbeforecompletion;
+            $DB->update_record('iomad_courses', $coursedetails);
+	//End Added by Noam
         } else if ('notifyperiod' == $update) {
             // Work out the time in seconds....
             if ($notifyperiod < 0) {
@@ -386,7 +396,7 @@ if (!empty($coursesearch)) {
 }
 
 // Set up the SQL for the table.
-$selectsql = "ic.id, c.id AS courseid, c.fullname AS coursename, ic.licensed, ic.shared, ic.validlength, ic.warnexpire, ic.warncompletion, ic.notifyperiod, ic.expireafter, ic.warnnotstarted, ic.hasgrade, '$companyid' AS companyid";
+$selectsql = "ic.id, c.id AS courseid, c.fullname AS coursename, ic.licensed, ic.shared, ic.validlength, ic.warnexpire, ic.warncompletion,ic.daysbeforecompletion, ic.notifyperiod, ic.expireafter, ic.warnnotstarted, ic.hasgrade, '$companyid' AS companyid";
 $fromsql = "{iomad_courses} ic JOIN {course} c ON (ic.courseid = c.id)";
 $wheresql = "$companysql $searchsql";
 $sqlparams = $params;
@@ -404,7 +414,8 @@ if ($canedit) {
         get_string('warnexpire', 'block_iomad_company_admin') . $OUTPUT->help_icon('warnexpire', 'block_iomad_company_admin'),
         get_string('warnnotstarted', 'block_iomad_company_admin') . $OUTPUT->help_icon('warnnotstarted', 'block_iomad_company_admin'),
         get_string('warncompletion', 'block_iomad_company_admin') . $OUTPUT->help_icon('warncompletion', 'block_iomad_company_admin'),
-        get_string('notifyperiod', 'block_iomad_company_admin') . $OUTPUT->help_icon('notifyperiod', 'block_iomad_company_admin'),
+        get_string('daysbeforecompletion', 'block_iomad_company_admin'),
+	get_string('notifyperiod', 'block_iomad_company_admin') . $OUTPUT->help_icon('notifyperiod', 'block_iomad_company_admin'),
         get_string('hasgrade', 'block_iomad_company_admin') . $OUTPUT->help_icon('hasgrade', 'block_iomad_company_admin'),
         get_string('actions'));
     $tablecolumns = array('company',
@@ -416,6 +427,7 @@ if ($canedit) {
                           'warnexpire',
                           'warnnotstarted',
                           'warncompletion',
+			  'daysbeforecompletion',
                           'notifyperiod',
                           'hasgrade',
                           'actions');

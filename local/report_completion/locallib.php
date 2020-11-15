@@ -62,8 +62,9 @@ class report_completion {
                                          GROUP BY courseid, coursename
                                          ORDER BY courseid",
                                          array('companyid' => $company->id));
+
         foreach ($courses as $id => $course) {
-            $courses[$id]->licensesallocated = 0;
+	    $courses[$id]->licensesallocated = 0;
             if ($licensesallocated = $DB->count_records_sql("SELECT count(lit.id) FROM {local_iomad_track} lit
                                                              JOIN {company_users} cu ON (lit.userid = cu.userid AND lit.companyid = cu.companyid)
                                                              JOIN {user} u ON (lit.userid = u.id)

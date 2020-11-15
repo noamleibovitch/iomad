@@ -131,7 +131,7 @@ class comprep{
                                                     WHERE pc.shared=1)")) {
                 // No courses for company, so exit.
                 return false;
-            }
+            } 
             foreach ($courses as $course) {
                 $courseids[] = $course->courseid;
             }
@@ -149,7 +149,6 @@ class comprep{
 
         // Get completion data for each course.
         foreach ($courseids as $courseid) {
-
             // Get course object.
             if (!$course = $DB->get_record('course', array('id' => $courseid))) {
                 error( 'unable to find course record' );
@@ -182,7 +181,6 @@ class comprep{
             // This is an array of users in the course. It contains a 'progress'
             // array showing completed *tracked* activities.
             $progress = $info->get_progress_all();
-
             // Iterate over users to get info.
             $users = array();
             $numusers = 0;

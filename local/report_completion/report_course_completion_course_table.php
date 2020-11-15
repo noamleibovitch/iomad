@@ -37,11 +37,11 @@ require_once($CFG->libdir.'/tablelib.php');
 class local_report_course_completion_course_table extends table_sql {
 
     /**
-     * Modified By Noam
-     * Override parent class function to remove rows where there are 0 users
-     **/
-    public function build_table() {
-        global $output, $CFG, $USER, $DB, $params;
+	* Modified By Noam
+	* Override parent class function to remove rows where there are 0 users
+    **/
+	public function build_table() {
+	global $output, $CFG, $USER, $DB, $params;
         if ($this->rawdata instanceof \Traversable && !$this->rawdata->valid()) {
             return;
         }
@@ -50,68 +50,59 @@ class local_report_course_completion_course_table extends table_sql {
         }
 
         foreach ($this->rawdata as $row) {
-
+	    
             $formattedrow = $this->format_row($row);
 
-            // Get the company details.
-            $company = new company($row->companyid);
-            $parentcompanies = $company->get_parent_companies_recursive();
+        // Get the company details.
+        $company = new company($row->companyid);
+        $parentcompanies = $company->get_parent_companies_recursive();
 
-            // Deal with parent company managers
-            if (!empty($parentcompanies)) {
-                $userfilter = " AND userid NOT IN (
+        // Deal with parent company managers
+        if (!empty($parentcompanies)) {
+            $userfilter = " AND userid NOT IN (
                              SELECT userid FROM {company_users}
                              WHERE companyid IN (" . implode(',', array_keys($parentcompanies)) . "))";
-            } else {
-                $userfilter = "";
-            }
+        } else {
+            $userfilter = "";
+        }
 
-            // Deal with department tree.
-            $alldepartments = company::get_all_subdepartments($row->departmentid);
-            $departmentsql = " AND cu.departmentid IN (" . join(",", array_keys($alldepartments)) . ") ";
+        // Deal with department tree.
+        $alldepartments = company::get_all_subdepartments($row->departmentid);
+        $departmentsql = " AND cu.departmentid IN (" . join(",", array_keys($alldepartments)) . ") ";
 
-            // Deal with suspended or not.
-            if (empty($row->showsuspended)) {
-                $suspendedsql = " AND u.suspended = 0 AND u.deleted = 0";
-            } else {
-                $suspendedsql = " AND u.deleted = 0";
-            }
+        // Deal with suspended or not.
+        if (empty($row->showsuspended)) {
+            $suspendedsql = " AND u.suspended = 0 AND u.deleted = 0";
+        } else {
+            $suspendedsql = " AND u.deleted = 0";
+        }
 
-            // Are we showing as a % of all users?
-            if (!empty($params['showpercentage'])) {
-                $totalusers = $DB->count_records_sql("SELECT count(cu.id)
-                                                  FROM {company_users} cu
-                                                  JOIN {user} u ON (cu.userid = u.id)
-                                                  WHERE cu.companyid = :companyid
-                                                  $departmentsql
-                                                  $userfilter
-                                                  $suspendedsql",
-                    array('companyid' => $company->id));
-            }
+        // Are we showing as a % of all users?
 
-            // Deal with any search dates.
-            $datesql = "";
-            $sqlparams = array('companyid' => $company->id, 'courseid' => $row->id);
-            if (!empty($params['from'])) {
-                $datesql = " AND (lit.timeenrolled > :enrolledfrom OR lit.timecompleted > :completedfrom ) ";
-                $sqlparams['enrolledfrom'] = $params['from'];
-                $sqlparams['completedfrom'] = $params['from'];
-            }
-            if (!empty($params['to'])) {
-                $datesql .= " AND (lit.timeenrolled < :enrolledto OR lit.timecompleted < :completedto) ";
-                $sqlparams['enrolledto'] = $params['to'];
-                $sqlparams['completedto'] = $params['to'];
-            }
+        // Deal with any search dates.
+        $datesql = "";
+        $sqlparams = array('companyid' => $company->id, 'courseid' => $row->id);
+        if (!empty($params['from'])) {
+            $datesql = " AND (lit.timeenrolled > :enrolledfrom OR lit.timecompleted > :completedfrom ) ";
+            $sqlparams['enrolledfrom'] = $params['from'];
+            $sqlparams['completedfrom'] = $params['from'];
+        }
+        if (!empty($params['to'])) {
+            $datesql .= " AND (lit.timeenrolled < :enrolledto OR lit.timecompleted < :completedto) ";
+            $sqlparams['enrolledto'] = $params['to'];
+            $sqlparams['completedto'] = $params['to'];
+        }
 
-            // Just valid courses?
-            if ($params['validonly']) {
-                $validcompletedsql = " AND (lit.timeexpires > :runtime or (lit.timecompleted > 0 AND lit.timeexpires IS NULL))";
-                $sqlparams['runtime'] = time();
-            } else {
-                $validcompletedsql = "";
-            }
-            // Count the  users.
-            $enrolledUsers = $DB->count_records_sql("SELECT COUNT(lit.id)
+    // Just valid courses?
+    if ($params['validonly']) {
+        $validcompletedsql = " AND (lit.timeexpires > :runtime or (lit.timecompleted > 0 AND lit.timeexpires IS NULL))";
+        $sqlparams['runtime'] = time();
+    } else {
+        $validcompletedsql = "";
+    }
+/*** Modified by Noam: Timeenrolled was changed to time started to display not started users in report */
+        // Count the completed users.
+        $enrolledUsers = $DB->count_records_sql("SELECT COUNT(lit.id)
                                              FROM {local_iomad_track} lit
                                              JOIN {company_users} cu ON (lit.userid = cu.userid AND lit.companyid = cu.companyid)
                                              JOIN {user} u ON (lit.userid = u.id)
@@ -121,13 +112,13 @@ class local_report_course_completion_course_table extends table_sql {
                                              $suspendedsql
                                              $validcompletedsql
                                              $departmentsql",
-                $sqlparams);
-            if ($enrolledUsers > 0 ) {
-                $this->add_data_keyed($formattedrow, $this->get_row_class($row));
-            }
+                                             $sqlparams);
+	if ($enrolledUsers > 0 ) {	
+		$this->add_data_keyed($formattedrow, $this->get_row_class($row));
+	}
         }
     }
-
+    
     // Modified by Noam END
 
 
@@ -138,7 +129,7 @@ class local_report_course_completion_course_table extends table_sql {
      */
     public function col_coursename($row) {
         global $output, $params;
-
+	
         if (!$this->is_downloading()) {
             $courseuserslink = new moodle_url('/local/report_completion/index.php',
                                               array('courseid' => $row->id,
@@ -148,7 +139,8 @@ class local_report_course_completion_course_table extends table_sql {
                                                 array('courseid' => $row->id,
                                                       'departmentid' => $row->departmentid));
             $courselicenselink = new moodle_url('/local/report_user_license_allocations/index.php',
-            );
+                                                array('courseid' => $row->id,
+                                                      'departmentid' => $row->departmentid));
             $cell = html_writer::tag('h2', format_string($row->coursename, true, 1));
             $systemcontext = context_system::instance();
             if (iomad::has_capability('local/report_users:view', $systemcontext)) {
@@ -363,7 +355,7 @@ class local_report_course_completion_course_table extends table_sql {
                                              JOIN {user} u ON (lit.userid = u.id)
                                              WHERE lit.companyid = :companyid
                                              AND lit.courseid = :courseid
-                                             AND lit.timecompleted IS NOT NULL
+                                             AND (lit.timecompleted IS NOT NULL OR lit.timecompleted != 0) 
                                              $datesql
                                              $suspendedsql
                                              $validcompletedsql
@@ -377,8 +369,8 @@ class local_report_course_completion_course_table extends table_sql {
                                            JOIN {user} u ON (lit.userid = u.id)
                                            WHERE lit.companyid = :companyid
                                            AND lit.courseid = :courseid
-                                           AND lit.timestarted IS NOT NULL
-                                           AND lit.timecompleted IS NULL
+                                           AND (lit.timestarted != 0)
+                                           AND (lit.timecompleted IS NULL OR lit.timecompleted = 0)
                                            $datesql
                                            $suspendedsql
                                            $departmentsql",
@@ -390,7 +382,7 @@ class local_report_course_completion_course_table extends table_sql {
                                               JOIN {user} u ON (lit.userid = u.id)
                                               WHERE lit.courseid = :courseid
                                               AND lit.companyid = :companyid
-                                              AND lit.timestarted IS NULL
+                                              AND (lit.timestarted =  0)
                                               $datesql
                                               $suspendedsql
                                               $departmentsql",
@@ -401,7 +393,7 @@ class local_report_course_completion_course_table extends table_sql {
             $enrolledchart = new \core\chart_pie();
             $enrolledchart->set_doughnut(true); // Calling set_doughnut(true) we display the chart as a doughnut.
             if (empty($params['showpercentage'])) {
-                $enrolledseries = new \core\chart_series('', array($completed, $started, $notstarted));
+                $enrolledseries = new \core\chart_series('סה"כ: '.$totalusers , array( $completed, $started, $notstarted));
                 $enrolledchart->add_series($enrolledseries);
                 $enrolledchart->set_labels(array(get_string('completedusers', 'local_report_completion') . " (" .$completed . ")",
                                              get_string('inprogressusers', 'local_report_completion') . " (" . $started . ")",

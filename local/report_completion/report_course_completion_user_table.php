@@ -105,6 +105,16 @@ class local_report_course_completion_user_table extends table_sql {
             return;
         }
     }
+/// Added By Noam - required time to finish column
+    public function col_timetofinish($row) {
+        global $CFG;
+
+        if (!empty($row->timetofinish)) {
+            return date($CFG->iomad_date_format, $row->timetofinish);
+        } else {
+            return;
+        }
+    }
 
     /**
      * Generate the display of the user's license allocated timestamp
@@ -149,7 +159,7 @@ class local_report_course_completion_user_table extends table_sql {
         global $CFG, $DB;
 
         if ($icourserec = $DB->get_record_sql("SELECT * FROM {iomad_courses} WHERE courseid = :courseid AND hasgrade = 1", array('courseid' => $row->courseid))) {
-            if (!empty($row->finalscore) && !empty($row->timeenrolled)) {
+            if (!empty($row->finalscore) && !empty($row->timecompleted)) {
                 return round($row->finalscore, $CFG->iomad_report_grade_places)."%";
             } else {
                 return;

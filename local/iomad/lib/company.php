@@ -112,14 +112,12 @@ class company {
         if (iomad::has_capability('block/iomad_company_admin:assign_department_manager', $systemcontext)) {
             $returnarray['2'] = get_string('departmentmanager', 'block_iomad_company_admin');
         }
-        /*** Added unit and senior manager types - Modified by Noam Leibovitch ***/
-        if (iomad::has_capability('block/iomad_company_admin:assign_department_manager', $systemcontext)) {
+	if (iomad::has_capability('block/iomad_company_admin:assign_department_manager', $systemcontext)) {
             $returnarray['5'] = get_string('unitmanager', 'block_iomad_company_admin');
         }
-        if (iomad::has_capability('block/iomad_company_admin:assign_department_manager', $systemcontext)) {
+	if (iomad::has_capability('block/iomad_company_admin:assign_department_manager', $systemcontext)) {
             $returnarray['6'] = get_string('seniormanager', 'block_iomad_company_admin');
         }
-        /*** Modification END ***/
         if (!$CFG->iomad_autoenrol_managers && iomad::has_capability('block/iomad_company_admin:assign_educator', $systemcontext)) {
             $returnarray['3'] = get_string('educator', 'block_iomad_company_admin');
         }
@@ -887,11 +885,11 @@ class company {
             $departmentid = $defaultdepartment->id;
         }
 
-        // Were we passed a manager type?  Check it. Modified by Noam to support new managers role
+        // Were we passed a manager type? Modifed by Noam  Check it.
         if ($managertype > 6) {
             // Default is standard user.
-            $managertype = 0;
-        }
+        	$managertype = 0;
+        } 
 
         // if this is the only company, set the theme and any company profile info.
         if (!$DB->get_records('company_users', array('userid' => $userid))) {
@@ -912,10 +910,10 @@ class company {
         $userrecord['userid'] = $userid;
         $userrecord['managertype'] = $managertype;
         $userrecord['companyid'] = $this->id;
-// Removed to unify move and assign users
+
 //        if ($DB->get_record('company_users', array('companyid' => $this->id, 'userid' => $userid))) {
-//            // Already in this company.  Nothing left to do.
-//            return true;
+            // Already in this company.  Nothing left to do.
+/// disabled by Noam to unify move and assign            return true;
 //        }
 
         // Moving a user.
@@ -970,7 +968,8 @@ class company {
         $companytree[$topcompanyid] = $topcompanyid;
 
         if (!$user=$DB->get_record('company_users', $assign)) {
-            if (($managertype == 1 || $managertype == 2) && $CFG->iomad_autoenrol_managers) {
+///            if (($managertype == 1 || $managertype == 2) && $CFG->iomad_autoenrol_managers) {
+            if (($managertype == 1 || $managertype >= 2) && $CFG->iomad_autoenrol_managers) {
                 $assign['educator'] = 1;
             } else {
                 $assign['educator'] = $educator;

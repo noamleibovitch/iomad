@@ -270,7 +270,29 @@ class iomad_courses_table extends table_sql {
      * @param object $user the table row being output.
      * @return string HTML content to go inside the td.
      */
-    public function col_warncompletion($row) {
+    public function col_daysbeforecompletion($row) {
+        global $output, $CFG, $DB, $params, $systemcontext;
+
+        if (iomad::has_capability('block/iomad_company_admin:managecourses', $systemcontext)) {
+            if (!empty($params['coursesearchtext'])) {
+                $coursesearch = '<input type="hidden" name="coursesearch" value="'.$params['coursesearchtext'].'" />';
+            } else {
+                $coursesearch = '';
+            }
+
+            return '<form action="iomad_courses_form.php" method="get">
+                    <input type="hidden" name="courseid" value="' . $row->courseid . '" />
+                    <input type="hidden" name="companyid" value="'.$row->companyid.'" />'.
+                $coursesearch .'
+                    <input type="hidden" name="update" value="daysbeforecompletion" />
+                    <input type="text" name="daysbeforecompletion" id="id_daysbeforecompletion" value="'.$row->daysbeforecompletion.'" size="10"/>
+                    <input type="submit" value="' . get_string('submit') . '" />
+                    </form>';
+        } else {
+            return $row->daysbeforecompletion;
+        }
+    }
+	public function col_warncompletion($row) {
         global $output, $CFG, $DB, $params, $systemcontext;
 
         if (iomad::has_capability('block/iomad_company_admin:managecourses', $systemcontext)) {

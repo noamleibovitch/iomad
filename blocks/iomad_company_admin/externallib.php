@@ -702,6 +702,14 @@ class block_iomad_company_admin_external extends external_api {
                                                   true)) {
                 $succeeded = false;
                 $errormessage = "Unable to assign user";
+/*** Added By Noam ***/
+	    if (!$company->assign_user_to_department($userrecord['departmentid'],
+                                                     $userrecord['userid'],
+                                                     $userrecord['managertype'],
+                                                     true)) {
+                $succeeded = false;
+		$errormessage = "Unable to assign user to department";																							  
+            } ///***********END**************///
             } else {
 
                 // Create an event for this.

@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
+$string['daysbeforecompletion'] = 'ימים לשליחת אזהרה לפני תאריך סיום נדרש';
 $string['completionwarndate'] = 'תאריך סיום נדרש';
 $string['timeenrolled'] = 'תאריך רישום';
 $string['firstname'] = 'שם';
@@ -719,3 +719,4 @@ $string['clientreporter'] = 'Client report only';
 $string['archetypecompanyreporter_role'] = 'Company report only';
 $string['companyreporter_role'] = 'Company report only';
 $string['companyreporter'] = 'Company report only';
+
